@@ -358,15 +358,18 @@ def select_keywords():
 
 def create_keyword_query(window, keywords):
     window.destroy()
+    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     print(keywords)
-    keyword_query = "SELECT  DISTINCT id,keyword FROM KEYWORDS "
+    keyword_query = "Select title, article_id from ARTICLE where article_id IN(select id from keywords where keyword in ("
+    print(keyword_query)
     for i in range(len(keywords)):
-        if i==0:
-            keyword_query= keyword_query+ f"  WHERE keyword='{keywords[0]}' "
-        else:
-            keyword_query= keyword_query + f"  UNION SELECT DISTINCT id,keyword FROM KEYWORDS WHERE keyword='{keywords[i]}' "
-
-    headers = ['id', 'keyword']
+        if i!=0:
+            keyword_query+=","
+        keyword_query += f"'{keywords[i]}'"
+        print(keyword_query)
+    keyword_query+=f') group by id having count(distinct keyword) = {len(keywords)});'
+    print(keyword_query)
+    headers = ['title, id']
     print_text_window(keyword_query, headers)
     
     
@@ -654,7 +657,7 @@ def generate_id():
     
 
 if __name__ == "__main__":
-    db_name = "academia.db"
+    db_name = "academia - moreData.db"
     connection = create_connection(db_name)
     if connection is not None:
         root = tk.Tk()
