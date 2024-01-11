@@ -367,9 +367,6 @@ def create_keyword_query(window, keywords):
     keyword_query+=f') group by id having count(distinct keyword) = {len(keywords)});'
     print(keyword_query)
     headers = ['title', 'article_id']
-    #TEST -------------
-    keyword_query = "SELECT id from TEST where name = 701151"
-    #------------------
     print_text_window(keyword_query, headers)
     
     
