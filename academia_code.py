@@ -4,12 +4,12 @@ from tkinter import scrolledtext
 import random
 import string
 from datetime import datetime
-import time
+import timeit
 
 #Connect to academia.db
 def create_connection(database_name):
     try:
-        connection = db.connect("academia.db")
+        connection = db.connect(database_name)
         print(f"Connected to database: {database_name}")
         return connection
     except db.Error as e:
@@ -242,7 +242,7 @@ def finalize_filter(ftype, headers, selection, entry, order):
         
     if ftype == "JOURNAL":
         if selection:
-            query = f"SELECT  title, publisher_name, {selection} FROM JOURNAL LEFT JOIN ISSUE ON title = journ_title"
+            query = f"SELECT  title, publisher_name, {selection} FROM JOURNAL INNER JOIN ISSUE ON title = journ_title"
         else:
             query = f"SELECT  title, publisher_name FROM JOURNAL LEFT JOIN ISSUE ON title = journ_title"
         if entry:
@@ -276,13 +276,13 @@ def print_text_window(query, selected_headers):
     height= text_window.winfo_screenheight()               
     text_window.geometry("%dx%d" % (width, height))
 
-    start_time = time.time()
+    start_time = timeit.default_timer()
     
     cursor = connection.cursor()
     cursor.execute(query)
     rows = cursor.fetchall()
     
-    end_time = time.time()
+    end_time = timeit.default_timer()
     estimated_time = end_time-start_time
     print("Estimated time: ", estimated_time)
 
@@ -297,7 +297,6 @@ def print_text_window(query, selected_headers):
         text_widget.insert(tk.END, f"{selected_data}\n")
 
     text_widget.pack(expand=True, fill="both")
-
 
 def select_keywords():
     try:   
@@ -358,18 +357,19 @@ def select_keywords():
 
 def create_keyword_query(window, keywords):
     window.destroy()
-    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     print(keywords)
-    keyword_query = "Select title, article_id from ARTICLE where article_id IN(select id from keywords where keyword in ("
-    print(keyword_query)
+    keyword_query = "Select title, article_id from ARTICLE where article_id in(select id from KEYWORDS where keyword in ("
+    
     for i in range(len(keywords)):
         if i!=0:
             keyword_query+=","
         keyword_query += f"'{keywords[i]}'"
-        print(keyword_query)
     keyword_query+=f') group by id having count(distinct keyword) = {len(keywords)});'
     print(keyword_query)
-    headers = ['title, id']
+    headers = ['title', 'article_id']
+    #TEST -------------
+    keyword_query = "SELECT id from TEST where name = 701151"
+    #------------------
     print_text_window(keyword_query, headers)
     
     
@@ -657,7 +657,7 @@ def generate_id():
     
 
 if __name__ == "__main__":
-    db_name = "academia - moreData.db"
+    db_name = "academia - muchMoreData.db"
     connection = create_connection(db_name)
     if connection is not None:
         root = tk.Tk()
