@@ -110,20 +110,20 @@ def open_main_window(user):
 
     tk.Label(main_window, text="*Select filter:", font=("Helvetica",14)).pack(pady=5)
     selected_filter = tk.StringVar(main_window)
-    filters = ["PUBLISHMENT", "ARTICLE", "JOURNAL", "KEYWORDS", "WRITER"]
+    filters = ["ALL PUBLISHMENTS", "JUST ARTICLES", "SCIENTIFIC JOURNALS", "FILTER BY KEYWORDS", "FILTER BY WRITER"]
     cascade_menu = tk.OptionMenu(main_window, selected_filter, *filters)
     cascade_menu.config(font=("Helvetica",14))
     cascade_menu.pack(pady=10)
 
-    filter_button = tk.Button(main_window, text="Filter",
+    filter_button = tk.Button(main_window, text="Search",
                               command=lambda: filter_options(selected_filter.get()),font=("Helvetica",14))
     filter_button.pack(pady=10)
 
-    save_button = tk.Button(main_window, text="Save",
+    save_button = tk.Button(main_window, text="Save an Article",
                               command=lambda: save_publishment(main_window, user), font=("Helvetica",14))
     save_button.pack(pady=10)
     
-    upload_button = tk.Button(main_window, text="Upload",
+    upload_button = tk.Button(main_window, text="Upload an Article",
                               command=lambda: upload_article(main_window, user), font=("Helvetica",14))
     upload_button.pack(pady=10)
 
@@ -135,7 +135,7 @@ def filter_options(selected_filter):
         print("Select one of the available options")
         return
 
-    if selected_filter == "ARTICLE":        
+    if selected_filter == "JUST ARTICLES":        
         option_names = ["Scientific field", "Writer email" , "Writer name", "Cited article id", "Cited article title"]
         options = ["scientific_field", "writer_mail", "fname, lname", "cited_article_id", "cited_title"]
         order_names = ["Title Alphabetical", "Title Reverse Alphabetical", "Writer Name", "ID"]
@@ -143,7 +143,7 @@ def filter_options(selected_filter):
         headers = ['article_id', 'title', 'scientific_field', 'writer_mail', 'fname', 'lname', 'cited_article_id', 'cited_title']
         select_filter(selected_filter, option_names, options, order_names, orders, headers)
         
-    if selected_filter == "PUBLISHMENT":
+    if selected_filter == "ALL PUBLISHMENTS":
          option_names = ["File address", "URL" , "Uploader", "Views", "Upload date"]
          options = ["file_address", "url", "uploader", "views", "upload_datetime"]
          order_names = ["Title Alphabetical", "Title Reverse Alphabetical", "ID", "Most Popular", "Newest", "Oldest"]
@@ -151,7 +151,7 @@ def filter_options(selected_filter):
          headers = ['id', 'title', 'file_address', 'url', 'uploader', 'views', 'upload_datetime']
          select_filter(selected_filter, option_names, options, order_names, orders, headers)
         
-    if selected_filter == "JOURNAL":
+    if selected_filter == "SCIENTIFIC JOURNALS":
          option_names = ["ID", "ISBN" , "Issue No", "Number of issues", "Publishment Date"]
          options = ["issue_id", "isbn" , "no_of_issue", "n_issues", "publishment_date"]
          order_names = ["Title Alphabetical", "Title Reverse Alphabetical", "ISBN", "Issue Number", "Most Issues", "Newest", "Oldest"]
@@ -159,15 +159,15 @@ def filter_options(selected_filter):
          headers = ['title', 'publisher_name', 'issue_id', 'isbn', 'no_of_issue', 'n_issues', 'publishment_date']
          select_filter(selected_filter, option_names, options, order_names, orders, headers)
 
-    if selected_filter == "WRITER":
+    if selected_filter == "FILTER BY WRITER":
          option_names = ["E-mail", "Employment", "Institution"]
          options = ["mail", "type", "inst_name"]
          order_names = ["Name Alphabetical", "Name Reverse Alphabetical", "Institution", "Institution type"]
          orders = ['lname, fname', 'lname, fname DESC', 'inst_name', 'type']
-         headers = ['lname', 'fname', 'mail', 'type', 'inst_name']
+         headers = ['lname', 'fname', 'mail', 'type', 'inst_name','aid', 'title']
          select_filter(selected_filter, option_names, options, order_names, orders, headers)
 
-    if selected_filter == "KEYWORDS":
+    if selected_filter == "FILTER BY KEYWORDS":
         select_keywords()
 
         
@@ -193,7 +193,7 @@ def select_filter(ftype, option_names, options, order_names, orders, headers):
     selected_options = [var.get() for var in checkbox_filters if var.get() is not None and var.get() != "0"]
     filters.set(", ".join(selected_options))
 
-    filter_entry_label = tk.Label(filter_window, text="Contains: \nInsert numbers for ID or characters for Title", font=("Helvetica", 14))
+    filter_entry_label = tk.Label(filter_window, text="Search: \nInsert numbers for ID or characters for Title", font=("Helvetica", 14))
     filter_entry_label.pack(pady=10)
     filter_entry = tk.Entry(filter_window, font=("Helvetica", 14))
     filter_entry.pack(pady=5)
@@ -215,7 +215,7 @@ def select_filter(ftype, option_names, options, order_names, orders, headers):
     
 
 def finalize_filter(ftype, headers, selection, entry, order):
-    if ftype == "ARTICLE":
+    if ftype == "JUST ARTICLES":
         if selection:
             query = f"SELECT article_id, title, {selection} FROM(SELECT article_id, title, scientific_field, writer_mail, fname, lname FROM(SELECT writer_mail, article_id AS works_on_id, fname, lname FROM WORKS_ON INNER JOIN WRITER ON writer_mail=\"e-mail\")INNER JOIN ARTICLE ON article_id=works_on_id) LEFT JOIN (SELECT citing_article_id, cited_article_id, title AS  cited_title FROM CITES INNER JOIN ARTICLE ON cited_article_id=article_id) ON article_id=citing_article_id"        
         else:
@@ -228,7 +228,7 @@ def finalize_filter(ftype, headers, selection, entry, order):
         if order:
             query = query + f" ORDER BY {order}"
             
-    if ftype == "PUBLISHMENT":
+    if ftype == "ALL PUBLISHMENTS":
         
         selection1 = re.sub("uploader", "writer_mail as uploader", selection)
         selection2 = re.sub("uploader", "publisher_name as uploader", selection)
@@ -245,7 +245,7 @@ def finalize_filter(ftype, headers, selection, entry, order):
         if order:
             query = query + f" ORDER BY {order}"
         
-    if ftype == "JOURNAL":
+    if ftype == "SCIENTIFIC JOURNALS":
         if selection:
             query = f"SELECT  title, publisher_name, {selection} FROM JOURNAL INNER JOIN ISSUE ON title = journ_title"
         else:
@@ -258,16 +258,16 @@ def finalize_filter(ftype, headers, selection, entry, order):
         if order:
             query = query + f" ORDER BY {order}"
 
-    if ftype == "WRITER":
+    if ftype == "FILTER BY WRITER":
         if selection:
-            query = f"SELECT lname,fname, {selection} FROM (SELECT fname, lname, \"e-mail\" AS mail, inst_name FROM WRITER LEFT JOIN COOPERATES ON \"e-mail\"=writer_mail) LEFT JOIN INSTITUTION ON inst_name=name"
+            query = f"SELECT lname, fname, {selection}, aid, title FROM (SELECT lname,fname,mail,type,inst_name FROM (SELECT fname, lname, \"e-mail\" AS mail, inst_name FROM WRITER LEFT JOIN COOPERATES ON \"e-mail\"=writer_mail) LEFT JOIN INSTITUTION ON inst_name=name) INNER JOIN (SELECT ARTICLE.article_id AS aid, title, writer_mail FROM ARTICLE INNER JOIN WORKS_ON ON ARTICLE.article_id=WORKS_ON.article_id) ON writer_mail=mail"
         else:
-            query = f"SELECT lname,fname FROM (SELECT fname, lname, \"e-mail\" AS mail, inst_name FROM WRITER LEFT JOIN COOPERATES ON \"e-mail\"=writer_mail) LEFT JOIN INSTITUTION ON inst_name=name"
+            query = f"SELECT lname, fname,  aid, title FROM (SELECT lname,fname,mail,type,inst_name FROM (SELECT fname, lname, \"e-mail\" AS mail, inst_name FROM WRITER LEFT JOIN COOPERATES ON \"e-mail\"=writer_mail) LEFT JOIN INSTITUTION ON inst_name=name) INNER JOIN (SELECT ARTICLE.article_id AS aid, title, writer_mail FROM ARTICLE INNER JOIN WORKS_ON ON ARTICLE.article_id=WORKS_ON.article_id) ON writer_mail=mail"
         if entry:
-            fullname = entry.split(" ")
-            lname = fullname[0]
-            fname = fullname[1]
-            query = query + f" WHERE fname LIKE '%{fname}%' AND lname LIKE '%{lname}%'"
+            if entry.isdigit():
+                query = query + f" WHERE article_id LIKE '%{entry}%' "
+            else:
+                query = query + f" WHERE title LIKE '%{entry}%' "
         if order:
             query = query + f" ORDER BY {order}"
     print(query)
