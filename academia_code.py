@@ -5,6 +5,7 @@ import random
 import string
 from datetime import datetime
 import timeit
+import re
 
 #Connect to academia.db
 def create_connection(database_name):
@@ -228,8 +229,12 @@ def finalize_filter(ftype, headers, selection, entry, order):
             query = query + f" ORDER BY {order}"
             
     if ftype == "PUBLISHMENT":
+        
+        selection1 = re.sub("uploader", "writer_mail as uploader", selection)
+        selection2 = re.sub("uploader", "publisher_name as uploader", selection)
+        
         if selection:
-            query = f"SELECT id, title, {selection} FROM (SELECT id, title, url, file_address, writer_mail as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ARTICLE ON article_id=id UNION SELECT id, journ_title AS title, url, file_address, publisher_name as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ISSUE ON issue_id=id)"
+            query = f"SELECT id, title, {selection} FROM (SELECT id, title, {selection1}  FROM PUBLISHMENT INNER JOIN ARTICLE ON article_id=id UNION SELECT id, journ_title AS title, {selection2}  FROM PUBLISHMENT INNER JOIN ISSUE ON issue_id=id)"
         else:
             query = f"SELECT id, title FROM (SELECT id, title, url, file_address, writer_mail as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ARTICLE ON article_id=id UNION SELECT id, journ_title AS title, url, file_address, publisher_name as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ISSUE ON issue_id=id)"
         if entry:
@@ -265,7 +270,8 @@ def finalize_filter(ftype, headers, selection, entry, order):
             query = query + f" WHERE fname LIKE '%{fname}%' AND lname LIKE '%{lname}%'"
         if order:
             query = query + f" ORDER BY {order}"
-        
+    print(query)
+    print()
     print_text_window(query, headers)
 
     
@@ -365,8 +371,13 @@ def create_keyword_query(window, keywords):
             keyword_query+=","
         keyword_query += f"'{keywords[i]}'"
     keyword_query+=f') group by id having count(distinct keyword) = {len(keywords)});'
-    print(keyword_query)
+    
+    #TEST
+    #keyword_query = "SELECT id FROM PUBLISHMENT WHERE views = (SELECT MAX(views) FROM PUBLISHMENT)"
     headers = ['title', 'article_id']
+    
+    print(keyword_query)
+    
     print_text_window(keyword_query, headers)
     
     
@@ -559,7 +570,7 @@ def finish_upload(writer_form, writers, article_title, article_field, article_da
     publish_id = generate_id()
     url = "https://database/" + publish_id + ".com"
     filepath = "C:/Drive/" + publish_id + ".pdf"
-    views = random.randint(199,9999)
+    views = 0
     standard = "APA"
     upload_date = datetime.now().strftime("%m/%d/%Y")
     
@@ -651,10 +662,10 @@ def generate_id():
     else:
         generate_id()
         
-    
+
 
 if __name__ == "__main__":
-    db_name = "academia - muchMoreData.db"
+    db_name = "academiaVeryBig.db"
     connection = create_connection(db_name)
     if connection is not None:
         root = tk.Tk()
