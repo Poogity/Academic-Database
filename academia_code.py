@@ -230,13 +230,14 @@ def finalize_filter(ftype, headers, selection, entry, order):
             
     if ftype == "ALL PUBLISHMENTS":
         
-        selection1 = re.sub("uploader", "writer_mail as uploader", selection)
-        selection2 = re.sub("uploader", "publisher_name as uploader", selection)
+        selection = re.sub("uploader", "COALESCE(writer_mail, publisher_name) AS uploader", selection)
         
         if selection:
-            query = f"SELECT id, title, {selection} FROM (SELECT id, title, {selection1}  FROM PUBLISHMENT INNER JOIN ARTICLE ON article_id=id UNION SELECT id, journ_title AS title, {selection2}  FROM PUBLISHMENT INNER JOIN ISSUE ON issue_id=id)"
+            #query = f"SELECT id, title, {selection} FROM (SELECT id, title, {selection1}  FROM PUBLISHMENT INNER JOIN ARTICLE ON article_id=id UNION SELECT id, journ_title AS title, {selection2}  FROM PUBLISHMENT INNER JOIN ISSUE ON issue_id=id)"
+            query = f"SELECT id, COALESCE(title, journ_title) AS title,{selection} FROM PUBLISHMENT LEFT JOIN ARTICLE ON id = article_id LEFT JOIN ISSUE i ON id = i.issue_id"
         else:
-            query = f"SELECT id, title FROM (SELECT id, title, url, file_address, writer_mail as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ARTICLE ON article_id=id UNION SELECT id, journ_title AS title, url, file_address, publisher_name as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ISSUE ON issue_id=id)"
+            #query = f"SELECT id, title FROM (SELECT id, title, url, file_address, writer_mail as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ARTICLE ON article_id=id UNION SELECT id, journ_title AS title, url, file_address, publisher_name as uploader, views, upload_datetime  FROM PUBLISHMENT INNER JOIN ISSUE ON issue_id=id)"
+            query = f"SELECT id, COALESCE(title, journ_title) AS title,url,file_address,COALESCE(writer_mail, publisher_mail) AS uploader, views, upload_datetime FROM PUBLISHMENT LEFT JOIN ARTICLE ON id = article_id LEFT JOIN ISSUE i ON id = i.issue_id"
         if entry:
             if entry.isdigit():
                 query = query + f" WHERE id LIKE '%{entry}%' "
@@ -372,8 +373,7 @@ def create_keyword_query(window, keywords):
         keyword_query += f"'{keywords[i]}'"
     keyword_query+=f') group by id having count(distinct keyword) = {len(keywords)});'
     
-    #TEST
-    #keyword_query = "SELECT id FROM PUBLISHMENT WHERE views = (SELECT MAX(views) FROM PUBLISHMENT)"
+    
     headers = ['title', 'article_id']
     
     print(keyword_query)
@@ -665,7 +665,7 @@ def generate_id():
 
 
 if __name__ == "__main__":
-    db_name = "academiaVeryBig.db"
+    db_name = "academia1,5M.db"
     connection = create_connection(db_name)
     if connection is not None:
         root = tk.Tk()
