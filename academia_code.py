@@ -81,6 +81,9 @@ def signup():
 
 #Adds unverified user on database 
 def on_signup_click(email, fullname, username):
+    if not email or not fullname or not username:
+        print("Please fill in all the fields")
+        return
     try:
         cursor = connection.cursor()
         insert_query = f"INSERT INTO USER('e-mail', name, verified, username) VALUES('{email}','{fullname}','false','{username}')"
@@ -119,7 +122,7 @@ def open_main_window(user):
                               command=lambda: filter_options(selected_filter.get()),font=("Helvetica",14))
     filter_button.pack(pady=10)
 
-    save_button = tk.Button(main_window, text="Save an Article",
+    save_button = tk.Button(main_window, text="Save a Publishment",
                               command=lambda: save_publishment(main_window, user), font=("Helvetica",14))
     save_button.pack(pady=10)
     
